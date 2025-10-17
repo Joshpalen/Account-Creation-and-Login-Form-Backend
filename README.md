@@ -72,10 +72,30 @@ Security & features included
 - Rate limiting applied to `/auth` endpoints (20 requests/min)
 - Input validation for register/login endpoints
 
-Next improvements
-- Add email verification and password reset flow
-- Replace SQLite with Postgres and add migrations
-- Add logging and structured error handling
-- Add HTTPS, stronger secrets handling (secrets manager)
+## Admin Role Support
+
+The backend now supports user roles. By default, all users are created with the `user` role. You can manually promote a user to `admin` in the database, or by using the `setRole` function in `src/db/users.js`.
+
+### Admin-only Endpoint
+
+- `GET /auth/admin` — Requires a valid JWT for a user with the `admin` role. Returns a welcome message if access is granted.
+
+#### Example: Promoting a User to Admin (using Node REPL or script)
+
+```js
+const users = require('./src/db/users');
+users.setRole(userId, 'admin');
+```
+
+#### Example: Accessing the Admin Endpoint
+
+1. Login as an admin user to get a JWT token.
+2. Make a request to `/auth/admin` with the token in the `Authorization` header:
+
+```
+Authorization: Bearer <your-admin-jwt>
+```
+
+If the user is not an admin, a 403 error is returned.
 
 

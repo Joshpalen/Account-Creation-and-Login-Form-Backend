@@ -3,6 +3,8 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+const swaggerUI = require('swagger-ui-express');
+const swaggerSpec = require('./swagger');
 const authRoutes = require('./routes/auth');
 const config = require('./config');
 const logger = require('./logger');
@@ -15,6 +17,9 @@ app.use(helmet());
 
 // CORS (allow all by default, configure in production)
 app.use(cors());
+
+// Swagger documentation
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 
 // Basic rate limiting for auth routes
 const limiter = rateLimit({

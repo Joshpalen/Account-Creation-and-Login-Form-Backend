@@ -1,7 +1,7 @@
 const knex = require('./knex');
 
-async function createUser({ email, passwordHash, verificationToken=null }) {
-  const [id] = await knex('users').insert({ email, password: passwordHash, email_verified: false, verification_token: verificationToken }).returning('id');
+async function createUser({ email, passwordHash, verificationToken=null, role='user' }) {
+  const [id] = await knex('users').insert({ email, password: passwordHash, email_verified: false, verification_token: verificationToken, role }).returning('id');
   return { id };
 }
 
@@ -25,4 +25,8 @@ async function updatePassword(id, passwordHash) {
   return knex('users').where({ id }).update({ password: passwordHash, reset_token: null });
 }
 
-module.exports = { createUser, findByEmail, findById, setEmailVerified, setResetToken, updatePassword };
+async function setRole(id, role) {
+  return knex('users').where({ id }).update({ role });
+}
+
+module.exports = { createUser, findByEmail, findById, setEmailVerified, setResetToken, updatePassword, setRole };

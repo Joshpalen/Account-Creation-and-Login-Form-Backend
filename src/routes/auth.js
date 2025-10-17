@@ -6,7 +6,99 @@ const { body, validationResult } = require('express-validator');
 const config = require('../config');
 const logger = require('../logger');
 const mailer = require('../mailer');
+
+const { requireAuth, requireAdmin } = require('../middleware/auth');
 const users = require('../db/users');
+/**
+ * @swagger
+ * /auth/admin:
+ *   get:
+ *     summary: Admin-only endpoint
+ *     description: Returns a message only if the user is an admin
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Admin access granted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Welcome, admin!
+ *       403:
+ *         description: Admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get('/admin', requireAuth, requireAdmin, (req, res) => {
+  res.json({ message: 'Welcome, admin!' });
+});
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       required:
+ *         - email
+ *         - password
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: User's email address
+ *           example: user@example.com
+ *         password:
+ *           type: string
+ *           format: password
+ *           description: User's password (min 6 characters)
+ *           example: mySecurePassword123
+ *     AuthResponse:
+ *       type: object
+ *       properties:
+ *         token:
+ *           type: string
+ *           description: JWT token for authentication
+ *           example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *         message:
+ *           type: string
+ *           description: Response message
+ *           example: Successfully logged in
+ *     ErrorResponse:
+ *       type: object
+ *       properties:
+ *         error:
+ *           type: string
+ *           description: Error message
+ *           example: Invalid credentials
+ *     PasswordResetRequest:
+ *       type: object
+ *       required:
+ *         - email
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: Email address for password reset
+ *           example: user@example.com
+ *     NewPassword:
+ *       type: object
+ *       required:
+ *         - password
+ *       properties:
+ *         password:
+ *           type: string
+ *           format: password
+ *           description: New password (min 6 characters)
+ *           example: newSecurePassword123
+ */
 
 const JWT_SECRET = config.JWT_SECRET;
 
@@ -14,6 +106,35 @@ function generateToken(payload, opts = {}) {
   return jwt.sign(payload, JWT_SECRET, opts);
 }
 
+/**
+ * @swagger
+ * /auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     description: Creates a new user account and sends verification email
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/User'
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Verification email sent
+ *       400:
+ *         description: Invalid input
+ *       409:
+ *         description: Email already registered
+ */
 router.post('/register',
   body('email').isEmail().withMessage('valid email required'),
   body('password').isLength({ min: 6 }).withMessage('password must be >= 6 chars'),
@@ -46,6 +167,39 @@ router.post('/register',
   }
 );
 
+/**
+ * @swagger
+ * /auth/verify:
+ *   get:
+ *     summary: Verify email address
+ *     description: Verifies a user's email address using the token sent in the verification email
+ *     tags: [Authentication]
+ *     parameters:
+ *       - in: query
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Email verification token
+ *         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *     responses:
+ *       200:
+ *         description: Email verified successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Email verified successfully
+ *       400:
+ *         description: Invalid or expired token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 router.get('/verify', async (req, res) => {
   const { token } = req.query || {};
   if (!token) return res.status(400).json({ error: 'missing token' });
@@ -61,6 +215,37 @@ router.get('/verify', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /auth/password-reset:
+ *   post:
+ *     summary: Request password reset
+ *     description: Sends a password reset email with a reset token
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/PasswordResetRequest'
+ *     responses:
+ *       200:
+ *         description: Reset email sent (returns OK even if email doesn't exist for security)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *       400:
+ *         description: Invalid email format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 router.post('/password-reset',
   body('email').isEmail().withMessage('valid email required'),
   async (req, res) => {
@@ -82,6 +267,56 @@ router.post('/password-reset',
   }
 );
 
+/**
+ * @swagger
+ * /auth/password-reset/confirm:
+ *   post:
+ *     summary: Confirm password reset
+ *     description: Reset password using the token received in email
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *               - password
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Password reset token received via email
+ *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 description: New password (min 6 characters)
+ *                 example: newSecurePassword123
+ *     responses:
+ *       200:
+ *         description: Password reset successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *       400:
+ *         description: Invalid token or password
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 router.post('/password-reset/confirm',
   body('token').notEmpty(),
   body('password').isLength({ min: 6 }),
@@ -103,6 +338,31 @@ router.post('/password-reset/confirm',
   }
 );
 
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Authenticate a user
+ *     description: Login with email and password to receive a JWT token
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/User'
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       400:
+ *         description: Invalid credentials
+ *       401:
+ *         description: Email not verified
+ */
 router.post('/login',
   body('email').isEmail().withMessage('valid email required'),
   body('password').notEmpty().withMessage('password required'),
