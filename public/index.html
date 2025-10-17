@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Account Management</title>
+    <link rel="stylesheet" href="/style.css">
+    <!-- Client-side crypto removed: backend handles hashing and 2FA verification -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.1/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <div class="form-nav">
+                <button class="switch-btn active" data-form="login">Login</button>
+                <button class="switch-btn" data-form="signup">Sign Up</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="form active">
+                <h2>Welcome Back!</h2>
+                <div class="form-group">
+                    <input type="email" id="loginEmail" required>
+                    <label>Email</label>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="loginPassword" required>
+                    <label>Password</label>
+                </div>
+                <div id="2faLoginSection" class="form-group hidden">
+                    <input type="text" id="login2FACode" pattern="[0-9]{6}">
+                    <label>2FA Code</label>
+                </div>
+                <button type="submit" class="submit-btn">Login</button>
+                <button type="button" class="recover-btn">Forgot Password?</button>
+            </form>
+
+            <!-- Logged-in user info -->
+            <div id="userInfo" class="form">
+                <h3>Logged in as <span id="userEmail"></span></h3>
+                <p>Role: <span id="userRole"></span></p>
+                <p>Permissions: <span id="userPerms"></span></p>
+                <a id="adminLink" href="/admin-ui" style="display:none">Admin Console</a>
+                <button id="logoutBtn">Logout</button>
+            </div>
+
+            <!-- Password Reset Form -->
+            <form id="resetPasswordForm" class="form">
+                <h2>Reset Password</h2>
+                <div class="form-group">
+                    <input type="email" id="resetEmail" required>
+                    <label>Email</label>
+                </div>
+                <button type="submit" class="submit-btn">Send Reset Link</button>
+            </form>
+
+            <!-- Sign Up Form -->
+            <form id="signupForm" class="form">
+                <h2>Create Secure Account</h2>
+                <div class="form-group">
+                    <input type="text" id="signupName" required pattern="[A-Za-z\s]{2,50}">
+                    <label>Full Name</label>
+                </div>
+                <div class="form-group">
+                    <input type="email" id="signupEmail" required>
+                    <label>Email</label>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="signupPassword" required 
+                           pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$">
+                    <label>Password</label>
+                    <div class="password-requirements">
+                        Password must contain at least:
+                        <ul>
+                            <li>12 characters</li>
+                            <li>One uppercase letter</li>
+                            <li>One lowercase letter</li>
+                            <li>One number</li>
+                            <li>One special character</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="confirmPassword" required>
+                    <label>Confirm Password</label>
+                </div>
+                <button type="submit" class="submit-btn">Create Account</button>
+                <p class="info-text">You will receive an email verification link after signup</p>
+            </form>
+
+            <!-- Email Verification Form -->
+            <form id="emailVerificationForm" class="form">
+                <h2>Email Verification</h2>
+                <p>Please enter the verification code sent to your email:</p>
+                <div class="form-group">
+                    <input type="text" id="verificationCode" required pattern="[0-9]{6}">
+                    <label>Verification Code</label>
+                </div>
+                <button type="submit" class="submit-btn">Verify Email</button>
+                <button type="button" class="resend-btn">Resend Code</button>
+            </form>
+
+            <!-- 2FA Setup Form -->
+            <form id="2faSetupForm" class="form">
+                <h2>Set Up Two-Factor Authentication</h2>
+                <div class="qr-container" id="qrCode"></div>
+                <p>Scan this QR code with your authenticator app</p>
+                <div class="form-group">
+                    <input type="text" id="2faCode" required pattern="[0-9]{6}">
+                    <label>Enter 2FA Code</label>
+                </div>
+                <button type="submit" class="submit-btn">Verify & Enable 2FA</button>
+                <div class="backup-codes" id="backupCodes"></div>
+            </form>
+        </div>
+    </div>
+    <script src="/script.js"></script>
+</body>
+</html>

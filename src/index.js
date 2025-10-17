@@ -10,6 +10,7 @@ const config = require('./config');
 const logger = require('./logger');
 const knex = require('./db/knex');
 const adminUIRoutes = require('./routes/admin-ui');
+const path = require('path');
 
 const app = express();
 
@@ -33,6 +34,10 @@ const limiter = rateLimit({
 app.use(express.json());
 app.use('/auth', limiter, authRoutes);
 app.use('/', adminUIRoutes);
+// Serve static frontend
+app.use(express.static(path.join(__dirname, '..', 'public')));
+// default to index.html for root
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 
 // basic health check
 app.get('/health', (req, res) => res.json({ ok: true }));
