@@ -43,7 +43,7 @@ router.get('/admin-ui', requireAuth, requireAdmin, async (req, res) => {
         </table>
         <script>
           async function changeRole(id, role) {
-            const res = await fetch(`/auth/admin/users/${id}/role`, {
+            const res = await fetch('/auth/admin/users/' + id + '/role', {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.token ? 'Bearer ' + localStorage.token : '' },
               body: JSON.stringify({ role })
@@ -53,7 +53,7 @@ router.get('/admin-ui', requireAuth, requireAdmin, async (req, res) => {
           }
           async function savePerm(id) {
             const permissions = document.getElementById('perm-' + id).value;
-            const res = await fetch(`/auth/admin/users/${id}/permissions`, {
+            const res = await fetch('/auth/admin/users/' + id + '/permissions', {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.token ? 'Bearer ' + localStorage.token : '' },
               body: JSON.stringify({ permissions })
@@ -63,7 +63,7 @@ router.get('/admin-ui', requireAuth, requireAdmin, async (req, res) => {
           }
           async function deleteUser(id) {
             if (!confirm('Delete user?')) return;
-            const res = await fetch(`/auth/admin/users/${id}`, {
+            const res = await fetch('/auth/admin/users/' + id, {
               method: 'DELETE',
               headers: { 'Authorization': localStorage.token ? 'Bearer ' + localStorage.token : '' }
             });
