@@ -339,8 +339,10 @@ router.post('/register',
         text: `Click to verify: ${verifyLink}`,
       });
 
-      logger.info('User registered %s', email);
-      return res.status(201).json({ id, email });
+  logger.info('User registered %s', email);
+  const created = await users.findById(id);
+  const token = generateToken({ sub: created.id, email: created.email, role: created.role, permissions: created.permissions || '' }, { expiresIn: '7d' });
+  return res.status(201).json({ id, email, token });
     } catch (err) {
       logger.error('register error: %o', err);
       return res.status(500).json({ error: 'internal error' });
@@ -558,7 +560,7 @@ router.post('/login',
       const ok = await bcrypt.compare(password, user.password);
       if (!ok) return res.status(401).json({ error: 'invalid credentials' });
 
-      const token = generateToken({ sub: user.id, email: user.email }, { expiresIn: '7d' });
+  const token = generateToken({ sub: user.id, email: user.email, role: user.role, permissions: user.permissions || '' }, { expiresIn: '7d' });
       return res.json({ token });
     } catch (err) {
       logger.error('login error: %o', err);
