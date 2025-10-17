@@ -98,4 +98,25 @@ Authorization: Bearer <your-admin-jwt>
 
 If the user is not an admin, a 403 error is returned.
 
+## Admin Management UI
+
+Visit `/admin-ui` in your browser (with a valid admin JWT in localStorage as `token`) to:
+- View all users
+- Promote/demote users
+- Delete users
+- Edit user permissions (comma-separated, e.g. `canDeleteUsers,canBanUsers`)
+
+## Permissions System
+
+Each user can have a comma-separated list of permissions (e.g. `canDeleteUsers,canBanUsers`).
+
+- Use the admin UI or the PATCH `/auth/admin/users/:id/permissions` endpoint to update permissions.
+- Use the `requirePermission('permissionName')` middleware to protect routes by permission.
+
+Example:
+```js
+const { requirePermission } = require('./middleware/auth');
+app.get('/admin/special', requireAuth, requirePermission('canDeleteUsers'), (req, res) => { ... });
+```
+
 

@@ -4,6 +4,7 @@ exports.up = function(knex) {
   table.string('email').unique().notNullable();
   table.string('password').notNullable();
   table.string('role').notNullable().defaultTo('user');
+  table.string('permissions').notNullable().defaultTo(''); // comma-separated permissions
   table.boolean('email_verified').defaultTo(false);
   table.string('verification_token');
   table.string('reset_token');

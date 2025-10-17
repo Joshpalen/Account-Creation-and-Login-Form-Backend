@@ -1,3 +1,184 @@
+/**
+ * @swagger
+ * /auth/admin/users/{id}/permissions:
+ *   patch:
+ *     summary: Update a user's permissions (admin only)
+ *     description: Set the permissions string for a user. Admin access required.
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - permissions
+ *             properties:
+ *               permissions:
+ *                 type: string
+ *                 example: canDeleteUsers,canBanUsers
+ *     responses:
+ *       200:
+ *         description: User permissions updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *       403:
+ *         description: Admin access required
+ *       404:
+ *         description: User not found
+ */
+router.patch('/admin/users/:id/permissions', requireAuth, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { permissions } = req.body;
+  const user = await users.findById(id);
+  if (!user) return res.status(404).json({ error: 'user not found' });
+  await users.setPermissions(id, permissions);
+  res.json({ ok: true });
+});
+/**
+ * @swagger
+ * /auth/admin/users/{id}/role:
+ *   patch:
+ *     summary: Change a user's role (admin only)
+ *     description: Promote or demote a user by changing their role. Admin access required.
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - role
+ *             properties:
+ *               role:
+ *                 type: string
+ *                 example: admin
+ *     responses:
+ *       200:
+ *         description: User role updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *       400:
+ *         description: Invalid role
+ *       403:
+ *         description: Admin access required
+ *       404:
+ *         description: User not found
+ */
+router.patch('/admin/users/:id/role', requireAuth, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { role } = req.body;
+  if (!['user', 'admin'].includes(role)) return res.status(400).json({ error: 'invalid role' });
+  const user = await users.findById(id);
+  if (!user) return res.status(404).json({ error: 'user not found' });
+  await users.setRole(id, role);
+  res.json({ ok: true });
+});
+
+/**
+ * @swagger
+ * /auth/admin/users/{id}:
+ *   delete:
+ *     summary: Delete a user (admin only)
+ *     description: Delete a user by ID. Admin access required.
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: User deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *       403:
+ *         description: Admin access required
+ *       404:
+ *         description: User not found
+ */
+router.delete('/admin/users/:id', requireAuth, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const user = await users.findById(id);
+  if (!user) return res.status(404).json({ error: 'user not found' });
+  await users.deleteUser(id);
+  res.json({ ok: true });
+});
+/**
+ * @swagger
+ * /auth/admin/users:
+ *   get:
+ *     summary: List all users (admin only)
+ *     description: Returns a list of all users. Admin access required.
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of users
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   email:
+ *                     type: string
+ *                   role:
+ *                     type: string
+ *                   email_verified:
+ *                     type: boolean
+ *       403:
+ *         description: Admin access required
+ */
+router.get('/admin/users', requireAuth, requireAdmin, async (req, res) => {
+  const allUsers = await users.listAll();
+  res.json(allUsers);
+});
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');

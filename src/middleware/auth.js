@@ -23,4 +23,13 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-module.exports = { requireAuth, requireAdmin };
+function requirePermission(permission) {
+  return (req, res, next) => {
+    if (!req.user || !req.user.permissions || !req.user.permissions.split(',').includes(permission)) {
+      return res.status(403).json({ error: 'permission denied' });
+    }
+    next();
+  };
+}
+
+module.exports = { requireAuth, requireAdmin, requirePermission };

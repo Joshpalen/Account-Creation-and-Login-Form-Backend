@@ -9,6 +9,7 @@ const authRoutes = require('./routes/auth');
 const config = require('./config');
 const logger = require('./logger');
 const knex = require('./db/knex');
+const adminUIRoutes = require('./routes/admin-ui');
 
 const app = express();
 
@@ -31,6 +32,7 @@ const limiter = rateLimit({
 
 app.use(express.json());
 app.use('/auth', limiter, authRoutes);
+app.use('/', adminUIRoutes);
 
 // basic health check
 app.get('/health', (req, res) => res.json({ ok: true }));
