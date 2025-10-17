@@ -1,55 +1,15 @@
-/**
- * @swagger
- * /auth/admin/users/{id}/permissions:
- *   patch:
- *     summary: Update a user's permissions (admin only)
- *     description: Set the permissions string for a user. Admin access required.
- *     tags: [Authentication]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: User ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - permissions
- *             properties:
- *               permissions:
- *                 type: string
- *                 example: canDeleteUsers,canBanUsers
- *     responses:
- *       200:
- *         description: User permissions updated
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 ok:
- *                   type: boolean
- *                   example: true
- *       403:
- *         description: Admin access required
- *       404:
- *         description: User not found
- */
-router.patch('/admin/users/:id/permissions', requireAuth, requireAdmin, async (req, res) => {
-  const { id } = req.params;
-  const { permissions } = req.body;
-  const user = await users.findById(id);
-  if (!user) return res.status(404).json({ error: 'user not found' });
-  await users.setPermissions(id, permissions);
-  res.json({ ok: true });
-});
+const express = require('express');
+const router = express.Router();
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { body, validationResult } = require('express-validator');
+const config = require('../config');
+const logger = require('../logger');
+const mailer = require('../mailer');
+const { requireAuth, requireAdmin } = require('../middleware/auth');
+const users = require('../db/users');
+
+// ... admin permissions route moved below after imports to fix initialization order
 /**
  * @swagger
  * /auth/admin/users/{id}/role:
@@ -103,6 +63,15 @@ router.patch('/admin/users/:id/role', requireAuth, requireAdmin, async (req, res
   const user = await users.findById(id);
   if (!user) return res.status(404).json({ error: 'user not found' });
   await users.setRole(id, role);
+  res.json({ ok: true });
+});
+
+router.patch('/admin/users/:id/permissions', requireAuth, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { permissions } = req.body;
+  const user = await users.findById(id);
+  if (!user) return res.status(404).json({ error: 'user not found' });
+  await users.setPermissions(id, permissions);
   res.json({ ok: true });
 });
 
@@ -179,17 +148,6 @@ router.get('/admin/users', requireAuth, requireAdmin, async (req, res) => {
   const allUsers = await users.listAll();
   res.json(allUsers);
 });
-const express = require('express');
-const router = express.Router();
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { body, validationResult } = require('express-validator');
-const config = require('../config');
-const logger = require('../logger');
-const mailer = require('../mailer');
-
-const { requireAuth, requireAdmin } = require('../middleware/auth');
-const users = require('../db/users');
 /**
  * @swagger
  * /auth/admin:
