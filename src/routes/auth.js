@@ -287,7 +287,8 @@ router.post('/register',
 
       const hash = await bcrypt.hash(password, 10);
       const verificationToken = generateToken({ email }, { expiresIn: '1d' });
-      const { id } = await users.createUser({ email, passwordHash: hash, verificationToken });
+      const createdResult = await users.createUser({ email, passwordHash: hash, verificationToken });
+      let id = createdResult && (createdResult.id || createdResult.ID || createdResult);
 
       // send verification email (if mailer configured)
       const verifyLink = `${req.protocol}://${req.get('host')}/auth/verify?token=${verificationToken}`;
@@ -296,11 +297,15 @@ router.post('/register',
         subject: 'Verify your account',
         text: `Click to verify: ${verifyLink}`,
       });
+      if (!id) {
+        logger.error('createUser did not return an id, result=%o', createdResult);
+        return res.status(500).json({ error: 'internal error' });
+      }
 
-  logger.info('User registered %s', email);
-  const created = await users.findById(id);
-  const token = generateToken({ sub: created.id, email: created.email, role: created.role, permissions: created.permissions || '' }, { expiresIn: '7d' });
-  return res.status(201).json({ id, email, token });
+      logger.info('User registered %s', email);
+      const created = await users.findById(id);
+      const token = generateToken({ sub: created.id, email: created.email, role: created.role, permissions: created.permissions || '' }, { expiresIn: '7d' });
+      return res.status(201).json({ id, email, token });
     } catch (err) {
       logger.error('register error: %o', err);
       return res.status(500).json({ error: 'internal error' });
