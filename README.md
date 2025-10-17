@@ -1,14 +1,22 @@
 # Account Creation and Login Backend
 
+[![Node.js CI](https://github.com/Joshpalen/Account-Creation-and-Login-Form-Backend/actions/workflows/nodejs.yml/badge.svg)](https://github.com/Joshpalen/Account-Creation-and-Login-Form-Backend/actions/workflows/nodejs.yml)
+
 Simple Express backend providing registration and login endpoints using SQLite, bcrypt and JWT.
 
 Endpoints:
 - POST /auth/register { email, password }
 - POST /auth/login { email, password }
+- GET /auth/verify?token=... (verify email)
+- POST /auth/password-reset { email }
+- POST /auth/password-reset/confirm { token, password }
 
-Run locally:
+Prerequisites:
+- Node.js 18+ (LTS recommended)
+- For production: PostgreSQL database
+- For emails: SMTP server credentials
 
-1. Install Node.js (if needed) and dependencies:
+Development Setup:
 
 ```powershell
 cd 'C:\Users\joshp\Desktop\Account Creation and Login Form Backend'
