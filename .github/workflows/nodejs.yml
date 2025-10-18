@@ -16,7 +16,18 @@ jobs:
         with:
           node-version: '20'
           check-latest: true
+      - name: Install build tooling (sqlite3)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3 libsqlite3-dev
       - name: Install deps
         run: npm ci --no-audit --no-fund
+        env:
+          npm_config_build_from_source: 'true'
+          npm_config_python: python3
+      - name: Rebuild sqlite3 (safety)
+        run: |
+          npx npm-which@3 sqlite3 >/dev/null 2>&1 || true
+          npm rebuild sqlite3 --build-from-source || true
       - name: Run tests
         run: npm test
