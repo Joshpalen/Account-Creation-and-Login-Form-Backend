@@ -520,6 +520,9 @@ router.post('/login',
       const user = await users.findByEmail(email);
       if (!user) return res.status(401).json({ error: 'invalid credentials' });
 
+      // Require verified email before issuing tokens
+      if (!user.email_verified) return res.status(401).json({ error: 'email not verified' });
+
       const ok = await bcrypt.compare(password, user.password);
       if (!ok) return res.status(401).json({ error: 'invalid credentials' });
 

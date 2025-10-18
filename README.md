@@ -2,121 +2,100 @@
 
 [![Node.js CI](https://github.com/Joshpalen/Account-Creation-and-Login-Form-Backend/actions/workflows/nodejs.yml/badge.svg)](https://github.com/Joshpalen/Account-Creation-and-Login-Form-Backend/actions/workflows/nodejs.yml)
 
-Simple Express backend providing registration and login endpoints using SQLite, bcrypt and JWT.
+Simple Express backend providing registration and login with email verification, password reset, optional 2FA (TOTP), role/permission-based admin endpoints, and a lightweight admin UI. Uses Express, Knex, SQLite (dev/test), and JWT.
 
-Endpoints:
-- POST /auth/register { email, password }
-- POST /auth/login { email, password }
-- GET /auth/verify?token=... (verify email)
-- POST /auth/password-reset { email }
-- POST /auth/password-reset/confirm { token, password }
+Key Endpoints
+- `POST /auth/register` { email, password }
+- `POST /auth/login` { email, password }
+- `GET /auth/verify?token=...` (verify email)
+- `POST /auth/password-reset` { email }
+- `POST /auth/password-reset/confirm` { token, password }
+- `POST /totp/setup` (auth) – start TOTP setup, returns otpauth URL + base32
+- `POST /totp/verify` { token } (auth) – verify TOTP and enable 2FA
+- `POST /totp/disable` (auth) – disable 2FA
+- `GET /auth/admin` (admin)
+- `PATCH /auth/admin/users/:id/role` (admin)
+- `PATCH /auth/admin/users/:id/permissions` (admin)
+- `DELETE /auth/admin/users/:id` (admin)
 
-Prerequisites:
+Prerequisites
 - Node.js 18+ (LTS recommended)
-- For production: PostgreSQL database
-- For emails: SMTP server credentials
+- For production: PostgreSQL database (dev/test use SQLite)
+- For emails: SMTP server credentials (optional)
 
-Development Setup:
-
-```powershell
-cd 'C:\Users\joshp\Desktop\Account Creation and Login Form Backend'
+Development Setup
+1) Install dependencies
+```
 npm install
 ```
 
-2. Copy `.env.example` to `.env` and set `JWT_SECRET`:
-
-```powershell
-copy .env.example .env
-# edit .env and change JWT_SECRET to a secure value
+2) Environment
+Copy `.env.example` to `.env` and set values. Minimum required is `JWT_SECRET` in non-test environments.
+```
+PORT=3000
+JWT_SECRET=change_this_to_a_secure_value
+# Optional:
+DATABASE_URL=
+SMTP_HOST=
+SMTP_PORT=
+SMTP_USER=
+SMTP_PASS=
 ```
 
-3. Start the server:
-
-```powershell
+3) Start the server
+```
 npm start
 ```
 
-Run tests (locally):
-
-```powershell
+4) Run tests
+```
 npm test
 ```
 
-Continuous Integration:
-
-There's a GitHub Actions workflow included that will install dependencies and run the test suite on push/PR.
-
-Notes / Next steps:
-- Add CORS configuration if the frontend is served from a different origin.
-- Add rate-limiting and request validation.
-- Use a persistent DB (Postgres) and migrations for production.
+Swagger UI is available at `/api-docs` when the server is running.
 
 Docker
 ------
 Build and run the service with Docker:
-
-```powershell
+```
 docker build -t account-auth-backend .
 docker run -p 3000:3000 --env JWT_SECRET=your_secret account-auth-backend
 ```
 
 Or using docker-compose:
-
-```powershell
+```
 docker compose up --build
 ```
 
-Security & features included
+Security & Features
 - Helmet for basic security headers
 - CORS enabled (configure origin in production)
 - Rate limiting applied to `/auth` endpoints (20 requests/min)
 - Input validation for register/login endpoints
+- Optional TOTP 2FA endpoints
+- Swagger docs at `/api-docs`
 
-## Admin Role Support
+Admin Role Support
+- By default, users are created with role `user`.
+- Promote a user to `admin` in the DB or via `setRole` from `src/db/users.js`.
 
-The backend now supports user roles. By default, all users are created with the `user` role. You can manually promote a user to `admin` in the database, or by using the `setRole` function in `src/db/users.js`.
+Admin-only Endpoint
+- `GET /auth/admin` — requires a valid JWT with role `admin`.
 
-### Admin-only Endpoint
-
-- `GET /auth/admin` — Requires a valid JWT for a user with the `admin` role. Returns a welcome message if access is granted.
-
-#### Example: Promoting a User to Admin (using Node REPL or script)
-
+Promote a User to Admin (Node REPL or script)
 ```js
 const users = require('./src/db/users');
 users.setRole(userId, 'admin');
 ```
 
-#### Example: Accessing the Admin Endpoint
+Permissions System
+- Each user can have a comma-separated list of permissions (e.g. `canDeleteUsers,canBanUsers`).
+- Use the admin UI or `PATCH /auth/admin/users/:id/permissions` to update permissions.
+- Use `requirePermission('permissionName')` to protect routes.
 
-1. Login as an admin user to get a JWT token.
-2. Make a request to `/auth/admin` with the token in the `Authorization` header:
-
-```
-Authorization: Bearer <your-admin-jwt>
-```
-
-If the user is not an admin, a 403 error is returned.
-
-## Admin Management UI
-
-Visit `/admin-ui` in your browser (with a valid admin JWT in localStorage as `token`) to:
-- View all users
-- Promote/demote users
-- Delete users
-- Edit user permissions (comma-separated, e.g. `canDeleteUsers,canBanUsers`)
-
-## Permissions System
-
-Each user can have a comma-separated list of permissions (e.g. `canDeleteUsers,canBanUsers`).
-
-- Use the admin UI or the PATCH `/auth/admin/users/:id/permissions` endpoint to update permissions.
-- Use the `requirePermission('permissionName')` middleware to protect routes by permission.
-
-Example:
+Example
 ```js
-const { requirePermission } = require('./middleware/auth');
-app.get('/admin/special', requireAuth, requirePermission('canDeleteUsers'), (req, res) => { ... });
+const { requireAuth, requirePermission } = require('./src/middleware/auth');
+app.get('/admin/special', requireAuth, requirePermission('canDeleteUsers'), (req, res) => { /* ... */ });
 ```
-
 

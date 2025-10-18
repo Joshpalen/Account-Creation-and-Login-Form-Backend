@@ -2,7 +2,7 @@ const request = require('supertest');
 process.env.NODE_ENV = 'test'; // ensure tests use the test config
 
 // mock mailer so tests don't send real emails and we can assert calls
-jest.mock('../src/mailer', () => ({ sendMail: jest.fn().mockResolvedValue(true) }));
+jest.mock('../src/mailer', () => ({ sendMail: jest.fn().mockResolvedValue(true), sendTemplate: jest.fn().mockResolvedValue(true), renderTemplate: jest.fn().mockReturnValue({ text: 't', html: '<p>h</p>' }) }));
 const mailer = require('../src/mailer');
 
 const knex = require('../src/db/knex');
@@ -66,8 +66,12 @@ describe('auth', () => {
     await request(app).post('/auth/register').send({ email: 'a@b.com', password: 'securepass' }).expect(409);
   });
 
-  test('login returns token', async () => {
+  test('login returns token (after verification)', async () => {
     await request(app).post('/auth/register').send({ email: 'x@y.com', password: 'secure123' }).expect(201);
+    // verify email first
+    const row = await knex('users').where({ email: 'x@y.com' }).first();
+    const token = row.verification_token;
+    await request(app).get('/auth/verify').query({ token }).expect(200);
     const res = await request(app).post('/auth/login').send({ email: 'x@y.com', password: 'secure123' }).expect(200);
     expect(res.body).toHaveProperty('token');
   });
@@ -100,6 +104,9 @@ describe('auth', () => {
     const token = row.reset_token;
     // confirm reset
     await request(app).post('/auth/password-reset/confirm').send({ token, password: 'newpass' }).expect(200);
+    // verify email before login
+    const verifyToken = (await knex('users').where({ email: 'r@r.com' }).first()).verification_token;
+    await request(app).get('/auth/verify').query({ token: verifyToken }).expect(200);
     // login with new password
     await request(app).post('/auth/login').send({ email: 'r@r.com', password: 'newpass' }).expect(200);
   });

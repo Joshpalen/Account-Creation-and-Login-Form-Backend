@@ -1,13 +1,15 @@
 exports.up = function(knex) {
   return knex.schema.createTable('users', function(table) {
     table.increments('id').primary();
-  table.string('email').unique().notNullable();
-  table.string('password').notNullable();
-  table.string('role').notNullable().defaultTo('user');
-  table.string('permissions').notNullable().defaultTo(''); // comma-separated permissions
-  table.boolean('email_verified').defaultTo(false);
-  table.string('verification_token');
-  table.string('reset_token');
+    table.string('email').unique().notNullable();
+    table.string('password').notNullable();
+    table.string('role').notNullable().defaultTo('user');
+    table.string('permissions').notNullable().defaultTo(''); // comma-separated permissions
+    table.boolean('email_verified').defaultTo(false);
+    table.string('verification_token');
+    table.string('reset_token');
+    table.string('totp_secret').nullable();
+    table.boolean('totp_enabled').notNullable().defaultTo(false);
     table.timestamps(true, true);
   });
 };

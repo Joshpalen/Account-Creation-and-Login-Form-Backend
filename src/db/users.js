@@ -64,4 +64,21 @@ async function setPermissions(id, permissions) {
   return knex('users').where({ id }).update({ permissions });
 }
 
-module.exports = { createUser, findByEmail, findById, setEmailVerified, setResetToken, updatePassword, setRole, setPermissions, listAll, deleteUser };
+async function setTotpSecret(id, secret) {
+  return knex('users').where({ id }).update({ totp_secret: secret });
+}
+
+async function enableTotp(id) {
+  return knex('users').where({ id }).update({ totp_enabled: true });
+}
+
+async function disableTotp(id) {
+  return knex('users').where({ id }).update({ totp_enabled: false, totp_secret: null });
+}
+
+async function getTotpSecret(id) {
+  const row = await knex('users').where({ id }).first('totp_secret');
+  return row ? row.totp_secret : null;
+}
+
+module.exports = { createUser, findByEmail, findById, setEmailVerified, setResetToken, updatePassword, setRole, setPermissions, listAll, deleteUser, setTotpSecret, enableTotp, disableTotp, getTotpSecret };

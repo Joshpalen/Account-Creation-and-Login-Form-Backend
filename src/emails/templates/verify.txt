@@ -1,0 +1,5 @@
+Hello {{ email }},
+
+Please verify your account by visiting: {{ verifyLink }}
+
+Thank you.

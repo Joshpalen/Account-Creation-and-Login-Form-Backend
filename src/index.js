@@ -33,6 +33,7 @@ const limiter = rateLimit({
 
 app.use(express.json());
 app.use('/auth', limiter, authRoutes);
+app.use('/totp', limiter, require('./routes/totp'));
 app.use('/', adminUIRoutes);
 // Serve static frontend
 app.use(express.static(path.join(__dirname, '..', 'public')));

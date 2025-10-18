@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
+const config = require('../config');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'secret';
+const JWT_SECRET = config.JWT_SECRET;
 
 function requireAuth(req, res, next) {
   const auth = req.headers.authorization || '';
@@ -9,6 +10,8 @@ function requireAuth(req, res, next) {
   const token = parts[1];
   try {
     const payload = jwt.verify(token, JWT_SECRET);
+    // Normalize common fields
+    if (!payload.id && payload.sub) payload.id = payload.sub;
     req.user = payload;
     return next();
   } catch (err) {
