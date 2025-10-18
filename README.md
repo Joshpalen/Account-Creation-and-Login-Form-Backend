@@ -1,6 +1,6 @@
 # Account Creation and Login Backend
 
-[![Node.js CI](https://github.com/Joshpalen/Account-Creation-and-Login-Form-Backend/actions/workflows/nodejs.yml/badge.svg)](https://github.com/Joshpalen/Account-Creation-and-Login-Form-Backend/actions/workflows/nodejs.yml)
+[![Node.js CI](https://github.com/Joshpalen/Account-Creation-and-Login-Form-Backend/actions/workflows/nodejs.yml/badge.svg?branch=main&event=push)](https://github.com/Joshpalen/Account-Creation-and-Login-Form-Backend/actions/workflows/nodejs.yml)
 
 Simple Express backend providing registration and login with email verification, password reset, optional 2FA (TOTP), role/permission-based admin endpoints, and a lightweight admin UI. Uses Express, Knex, SQLite (dev/test), and JWT.
 
