@@ -41,6 +41,10 @@
                 <p>Role: <span id="userRole"></span></p>
                 <p>Permissions: <span id="userPerms"></span></p>
                 <a id="adminLink" href="/admin-ui" style="display:none">Admin Console</a>
+                <div style="margin: 1rem 0; display: grid; gap: 0.5rem;">
+                  <button id="setup2faBtn" type="button" class="submit-btn">Enable 2FA</button>
+                  <button id="disable2faBtn" type="button" class="recover-btn">Disable 2FA</button>
+                </div>
                 <button id="logoutBtn">Logout</button>
             </div>
 
@@ -91,10 +95,10 @@
             <!-- Email Verification Form -->
             <form id="emailVerificationForm" class="form">
                 <h2>Email Verification</h2>
-                <p>Please enter the verification code sent to your email:</p>
+                <p>Paste the verification link or token from your email:</p>
                 <div class="form-group">
-                    <input type="text" id="verificationCode" required pattern="[0-9]{6}">
-                    <label>Verification Code</label>
+                    <input type="text" id="verificationCode" required>
+                    <label>Verification Token or Link</label>
                 </div>
                 <button type="submit" class="submit-btn">Verify Email</button>
                 <button type="button" class="resend-btn">Resend Code</button>
